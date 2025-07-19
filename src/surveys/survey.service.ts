@@ -1,11 +1,11 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Survey, SurveyDocument } from './surveys.schema';
+import { Survey, SurveyDocument } from './survey.schema';
 import { Model } from 'mongoose';
 import { CreateSurveyDTO } from './createSurvey.dto';
 
 @Injectable()
-export class SurveysService {
+export class SurveyService {
   constructor(
     @InjectModel(Survey.name) private surveyModel: Model<SurveyDocument>,
   ) {}

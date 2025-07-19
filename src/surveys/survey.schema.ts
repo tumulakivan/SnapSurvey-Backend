@@ -12,4 +12,4 @@ export class Survey {
   description?: string;
 }
 
-export const SurveysSchema = SchemaFactory.createForClass(Survey);
+export const SurveySchema = SchemaFactory.createForClass(Survey);
