@@ -1,8 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Survey, SurveyDocument } from './survey.schema';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { CreateSurveyDTO } from './createSurvey.dto';
+import { TransformedSurvey } from 'src/types/TransformedSurvey';
 
 @Injectable()
 export class SurveyService {
@@ -19,17 +20,34 @@ export class SurveyService {
     return this.surveyModel.insertMany(dto);
   }
 
-  async findAll(): Promise<Survey[]> {
-    return this.surveyModel.find().exec();
+  async findAll() {
+    const surveys = await this.surveyModel.find().lean().exec();
+    const transformSurveys = surveys.map((survey) => {
+      const { _id, name, description } = survey;
+
+      return {
+        ID: _id,
+        Name: name,
+        Description: description,
+      };
+    });
+
+    return transformSurveys;
   }
 
-  async findById(id: string): Promise<Survey> {
+  async findById(id: string): Promise<TransformedSurvey> {
     const survey = await this.surveyModel.findById(id).exec();
 
     if (!survey)
       throw new NotFoundException(`Survey with ID: ${id} not found.`);
 
-    return survey;
+    const { name, description } = survey;
+
+    return {
+      ID: (survey._id as Types.ObjectId).toString(),
+      Name: name,
+      Description: description,
+    };
   }
 
   async patchById(id: string, updates: Partial<Survey>): Promise<Survey> {

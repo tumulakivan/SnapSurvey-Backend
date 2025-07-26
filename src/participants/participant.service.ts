@@ -1,8 +1,9 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Participant, ParticipantDocument } from './participant.schema';
-import { Model } from 'mongoose';
+import { Model, Types } from 'mongoose';
 import { CreateParticipantDTO } from './createParticipant.dto';
+import { TransformedParticipant } from 'src/types/TransformedParticipant';
 
 @Injectable()
 export class ParticipantService {
@@ -20,17 +21,38 @@ export class ParticipantService {
     return this.participantModel.insertMany(dto);
   }
 
-  async findAll(): Promise<Participant[]> {
-    return this.participantModel.find().exec();
+  async findAll() {
+    const participants = await this.participantModel.find().lean().exec();
+    const transformParticipants = participants.map((participant) => {
+      const { _id, firstName, lastName, email, surveys } = participant;
+
+      return {
+        ID: _id,
+        'First Name': firstName,
+        'Last Name': lastName,
+        'E-mail': email,
+        Surveys: surveys,
+      };
+    });
+
+    return transformParticipants;
   }
 
-  async findById(id: string): Promise<Participant> {
-    const participant = await this.participantModel.findById(id).exec();
+  async findById(id: string): Promise<TransformedParticipant> {
+    const participant = await this.participantModel.findById(id).lean().exec();
 
     if (!participant)
       throw new NotFoundException(`Participant with ID: ${id} not found.`);
 
-    return participant;
+    const { firstName, lastName, email, surveys } = participant;
+
+    return {
+      ID: (participant._id as Types.ObjectId).toString(),
+      'First Name': firstName,
+      'Last Name': lastName,
+      'E-mail': email,
+      Surveys: surveys,
+    };
   }
 
   async patchById(
